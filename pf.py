@@ -1,6 +1,6 @@
 #!/bin/python3
 #
-# pythfinder.py - pythfinder CLI
+# pf.py - pythfinder CLI
 
 import argparse
 import json
