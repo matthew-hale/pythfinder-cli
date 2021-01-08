@@ -63,25 +63,67 @@ def get(args):
     print(target_type)
 
 # Argument parsing
-parser = argparse.ArgumentParser(description = "The pythfinder CLI")
+parser = argparse.ArgumentParser(description = "The pythfinder CLI - interact with local or remote pathfinder character sheets.")
 
-subparsers = parser.add_subparsers(title = "actions")
+actions = parser.add_subparsers(title = "action", required = True, metavar = "action", description = "the type of action to take with the character sheet")
 
-parser_get = subparsers.add_parser("get",
-                                   help = "list various pieces of the character sheet")
+parser_new = actions.add_parser("new", help = "create a new character sheet")
+parser_get = actions.add_parser("get", help = "retrieve various pieces of data from the character sheet")
+parser_create = actions.add_parser("create", help = "create a new item in a collection, or a new character sheet")
+parser_update = actions.add_parser("update", help = "update a specific item, collection of items, or fields of the character sheet")
+parser_delete = actions.add_parser("delete", help = "delete one or more items in a collection")
+parser_copy = actions.add_parser("copy", help = "copy an existing character sheet to a new location")
 
-parser_get.add_argument("element", metavar = "element",
-                        help = "the element of the character sheet to 'get'",
-                        choices = ["character", "equipment"])
-parser_get.add_argument("target", metavar = "target",
-                        help = "the target character sheet to interact with")
+# All CRUD actions except for delete get the collection argument 
+# (delete gets a slightly modified collection argument that does not 
+# include "character")
+for action in [parser_get, parser_create, parser_update]:
+    action.add_argument("collection", metavar = "collection",
+                        help = "the collection of elements to interact with",
+                        choices = [
+                            "character",
+                            "feat",
+                            "trait",
+                            "special",
+                            "class",
+                            "ability",
+                            "throw",
+                            "equipment",
+                            "skill",
+                            "spell",
+                            "attack",
+                            "armor"
+                        ])
 
-parser_get.set_defaults(func = get)
-parser_save = subparsers.add_parser("save",
-                                    help = "save the character sheet in source to dest")
+# delete's special collection arg
+parser_delete.add_argument("collection", metavar = "collection",
+                           help = "the collection of elements to interact with",
+                           choices = [
+                               "character",
+                               "feat",
+                               "trait",
+                               "special",
+                               "class",
+                               "ability",
+                               "throw",
+                               "equipment",
+                               "skill",
+                               "spell",
+                               "attack",
+                               "armor"
+                           ])
 
-parser_save.add_argument("source", metavar = "source")
-parser_save.add_argument("destination", metavar = "destination")
+# Get, update, and delete can have filters
+for action in [parser_get, parser_update, parser_delete]:
+    action.add_argument("filter", metavar = "filter", help = "optional filters to apply; can also provide a single UUID string to specify an item directly", nargs = "?", default = "{}")
+
+for action in [parser_create, parser_update]:
+    action.add_argument("values", metavar = "values", help = "new values in JSON format")
+
+parser_new.add_argument("values", metavar = "values", help = "new values in JSON format (optional)", nargs = "?", default = "{}")
+
+for _, action in actions.choices.items():
+    action.add_argument("target", metavar = "target", help = "the target character sheet; file path, scp URL, or pythfinder.io URL")
 
 if __name__ == "__main__":
     # Parse args
@@ -92,4 +134,4 @@ if __name__ == "__main__":
 
     ensure_pythfinder_dir()
 
-    args.func(args)
+    print(args)
